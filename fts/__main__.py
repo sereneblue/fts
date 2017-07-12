@@ -5,6 +5,7 @@ Instantly find subtitles via the command line
 Usage:
 	fts [--lang <lang>] <filepath>
 	fts set <username> <password>
+	fts upload <filepath> <subpath>
 
 Options:
 	-h --help                Show this screen.
@@ -14,6 +15,7 @@ Options:
 Examples:
 	fts The.Pirate.Bay.Away.From.Keyboard.2013.1080p.BRrip.x264.GAZ.YIFY.mp4
 	fts --lang spa "The Complete Metropolis Disc 1_Title1.mp4"
+	fts upload The.Pirate.Bay.Away.From.Keyboard.2013.1080p.BRrip.x264.GAZ.YIFY.mp4 The.Pirate.Bay.Away.From.Keyboard.2013.1080p.BRrip.x264.GAZ.YIFY.srt
 """
 
 from inspect import getmembers, isclass
@@ -34,11 +36,18 @@ def main():
 
 	if options['set']:
 		f.set_credentials(options['<username>'], options['<password>'])
-	else:
-		#check if valid file
-		if not isfile(abspath(options['<filepath>'].replace('\\',''))):
-			print('This is not a valid file.')
+	if options['upload']:
+		options['<filepath>'] = options['<filepath>'].replace('\\','')
+		options['<subpath>'] = options['<subpath>'].replace('\\','')
+		if not isfile(abspath(options['<filepath>'])) or not isfile(abspath(options['<subpath>'])):
+			print('=> This is not a valid file.')
 			return
 
-		# remove \\ from file path if spaces in filename
-		f.find_sub(options['<filepath>'].replace('\\',''), options['--lang'] if options['--lang'] else 'eng')
+		f.upload_sub(options['<filepath>'], options['<subpath>'])
+	else:
+		options['<filepath>'] = options['<filepath>'].replace('\\','')
+		if not isfile(abspath(options['<filepath>'])):
+			print('=> This is not a valid file.')
+			return
+
+		f.find_sub(options['<filepath>'], options['--lang'] if options['--lang'] else 'eng')

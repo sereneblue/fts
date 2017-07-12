@@ -40,12 +40,12 @@ class FTS:
 		"""
 
 		try:
-			with open(expanduser('~/.fts')) as f:
+			with open(expanduser('~/.ftsrc')) as f:
 				user, password = f.read().split('\n')
 			if not self.opensubs.login(user, password):
-				print('Credentials are not valid! Using anonymous login...')
+				print('=> Credentials are not valid! Using anonymous login...')
 				raise ValueError
-		except ValueError:
+		except (ValueError, FileNotFoundError):
 			# Use anonymous login if no account provided
 			self.opensubs.login()
 
@@ -55,11 +55,11 @@ class FTS:
 		"""
 
 		if self.opensubs.login(username, password):
-			with open(expanduser('~/.fts'), 'w') as f:
+			with open(expanduser('~/.ftsrc'), 'w') as f:
 				f.write("{}\n{}".format(username, password))
-			print('Credentials saved')
+			print('=> Credentials saved')
 			return
-		print('Credentials are not valid')
+		print('=> Credentials are not valid')
 
 	def find_sub(self, fn, lang):
 		"""
@@ -72,10 +72,10 @@ class FTS:
 		if self.check_opensubs(fn, lang if lang != "por" else "pob"):
 			self.opensubs.logout()
 			return
-		print('Can\'t find subtitle on OpenSubtitles. Checking subscene...')
+		print('=> Can\'t find subtitle on OpenSubtitles. Checking subscene...')
 		if self.check_subscene(fn, lang):
 			return
-		print('Couldn\'t find subtitle on subscene either. :\'(')
+		print('=> Couldn\'t find subtitle on subscene either. :\'(')
 
 	def check_opensubs(self, file, lang):
 		"""
@@ -101,9 +101,9 @@ class FTS:
 
 			if max(weights) > .6:
 				option = weights.index(max(weights))
-				print('Found subtitle! Downloading...')
+				print('=> Found subtitle! Downloading...')
 				self.opensubs.download(file_path, response['data'][option]['SubDownloadLink'])
-				print('Subtitle downloaded to:\n{}'.format(file_path))
+				print('=> Subtitle downloaded to:\n{}'.format(file_path))
 				return True
 
 		# if above fails, check by filename
@@ -111,7 +111,7 @@ class FTS:
 		if data:
 			response = self.opensubs.search_subtitles(lang, imdbid=data)
 			if response:
-				print('Found subtitle! Downloading...')
+				print('=> Found subtitle! Downloading...')
 				# get the full path of the video without the extensions
 				file_path = splitext(abspath(file))[0]
 
@@ -119,7 +119,7 @@ class FTS:
 				file_path += ("." + response['data'][0]['SubFileName'].split('.')[-1])
 
 				self.opensubs.download(file_path, response['data'][0]['SubDownloadLink'])
-				print('Subtitle downloaded to:\n{}'.format(file_path))
+				print('=> Subtitle downloaded to:\n{}'.format(file_path))
 				return True
 		return False
 
@@ -151,7 +151,7 @@ class FTS:
 			option = weights.index(max(weights))
 
 			if weights[option] > .75:
-				print('Found subtitle (subscene): {}'.format(subs[option][1]))
+				print('=> Found subtitle (subscene): {}'.format(subs[option][1]))
 				response = self.session.get("https://subscene.com" + subs[option][0]).text
 				download_link = re.search('href="(/subtitle/download\?mac=.*?)"', response).groups()[0]
 
@@ -175,6 +175,31 @@ class FTS:
 					except UnicodeDecodeError:
 						with open(file_path, 'w') as f:
 							f.write(z.read(z.namelist()[0]).decode('latin-1'))
-				print('Subtitle downloaded to:\n{}'.format(file_path))
+				print('=> Subtitle downloaded to:\n{}'.format(file_path))
 				return True
 		return False
+
+	def upload_sub(self, filepath, subpath):
+		"""
+		Upload a subtitle for a movie
+		"""
+
+		self.check_credentials()
+
+		response = self.opensubs.try_upload_subtitle(filepath, subpath)
+
+		if response[0]:
+			print("=> Uploading subtitle for {}".format(response[0]['MovieReleaseName']))
+			r = self.opensubs.upload_subtitle({
+					'IDMovieImdb': response[0]['IDMovieImdb'],
+					'MovieNameEng': response[0]['MovieNameEng'],
+					'moviehash': response[0]['MovieHash'],
+					'moviebytesize': response[0]['MovieByteSize'],
+					'moviefilename': response[1]['moviefilename'],
+					'subfilename': response[1]['subfilename']
+				}, subpath)
+			print("=> Subtitle uploaded: {}".format(r))
+		else:
+			print("=> {}".format(response[1]))
+
+		self.opensubs.logout()

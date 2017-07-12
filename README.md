@@ -23,6 +23,7 @@ $ python setup.py install
 
 	fts [--lang <lang>] <filepath>
 	fts set <username> <password>
+	fts upload <filepath> <subpath>
 
 ### Options
 
@@ -34,12 +35,15 @@ $ python setup.py install
 
 	$ fts The.Pirate.Bay.Away.From.Keyboard.2013.1080p.BRrip.x264.GAZ.YIFY.mp4
     Found subtitle! Downloading...
-    Subtitle downloaded to:
+    => Subtitle downloaded to:
 	/home/sereneblue/Downloads/The Pirate Bay Away From Keyboard (2013 [1080p]/The.Pirate.Bay.Away.From.Keyboard.2013.1080p.BRrip.x264.GAZ.YIFY.srt
 
 	$ fts --lang spa "The Complete Metropolis Disc 1_Title1.mp4"
 	Can't find subtitle on OpenSubtitles. Checking subscene...
-	Couldn't find subtitle on subscene either. :'(
+	=> Couldn't find subtitle on subscene either. :'(
+
+	$ fts upload The.Pirate.Bay.Away.From.Keyboard.2013.1080p.BRrip.x264.GAZ.YIFY.mp4 The.Pirate.Bay.Away.From.Keyboard.2013.1080p.BRrip.x264.GAZ.YIFY.srt
+	=> Subtitle already in database!
 
 ### Use your OpenSubtitles account
 
@@ -49,14 +53,10 @@ It is strongly recommended that you create an OpenSubtitles account for use with
 $ fts set user pass
 ```
 
-Or create a file at '~/.fts' like this:
+Or create a file at '~/.ftsrc' like this:
 
 	user
 	pass
-
-# Todo
-
-* Add upload subtitle support to opensubtitles (contribute for those obscure titles) :)
 
 # Thanks
 
