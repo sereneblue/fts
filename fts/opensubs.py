@@ -14,30 +14,11 @@ import struct, os
 import xmlrpc.client
 import zlib
 
-
-import http.client
-
-class ProxiedTransport(xmlrpc.client.Transport):
-
-    def set_proxy(self, host, port=None, headers=None):
-        self.proxy = host, port
-        self.proxy_headers = headers
-
-    def make_connection(self, host):
-        connection = http.client.HTTPConnection(*self.proxy)
-        connection.set_tunnel(host, headers=self.proxy_headers)
-        self._connection = host, connection
-        return connection
-
-transport = ProxiedTransport()
-transport.set_proxy('127.0.0.1', 8080)
-
 class OpenSubtitles:
 	def __init__(self):
 		self.ua = "OSTestUserAgentTemp" # temp place holder. Need to register a ua with opensubs
 		self.token = None
-		self.proxy = xmlrpc.client.Server('https://api.opensubtitles.org/xml-rpc', transport=transport)
-		# self.proxy = xmlrpc.client.Server("https://api.opensubtitles.org/xml-rpc")
+		self.proxy = xmlrpc.client.Server("https://api.opensubtitles.org/xml-rpc")
 
 	def download(self, file_path, gzip_link):
 		"""
